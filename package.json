@@ -1,6 +1,7 @@
 {
   "name": "chipstackoverflow-api",
   "version": "0.0.0",
+  "author": "Kohei Asai <yo@kohei.dev> (https://kohei.dev/)",
   "private": true,
   "scripts": {
     "test": "jest",
@@ -9,10 +10,8 @@
     "migrate:generate": "ts-node ./node_modules/.bin/typeorm migration:generate",
     "dev": "ts-node main.ts",
     "build": "tsc --project . --outDir build",
-    "start": "node build/main.js",
-    "heroku-postbuild": "npm run build && npm run migrate:up"
+    "start": "node build/main.js"
   },
-  "author": "Kohei Asai <yo@kohei.dev> (https://kohei.dev/)",
   "dependencies": {
     "apollo-server": "^2.12.0",
     "apollo-server-fastify": "^2.12.0",
