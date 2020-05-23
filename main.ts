@@ -10,15 +10,6 @@ const fastify = Fastify();
 fastify.register(admin);
 fastify.register(apollo.createHandler());
 
-fastify.get(
-  "/.well-known/acme-challenge/lAyuSE4ow1fkY8LvAf-vJV_RpeBaNegHvijPHWNO5AA",
-  (_, reply) => {
-    reply.send(
-      "lAyuSE4ow1fkY8LvAf-vJV_RpeBaNegHvijPHWNO5AA.LwPsxreP2u3mY76MKChA4fvuowa4GayT2d_aOWCpzKQ"
-    );
-  }
-);
-
 (async () => {
   await createConnection({
     ...(await getConnectionOptions()),

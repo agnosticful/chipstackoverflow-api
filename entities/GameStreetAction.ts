@@ -4,7 +4,7 @@ export default interface GameStreetAction {
   betSize: number;
 }
 
-enum GameStreetActionType {
+export enum GameStreetActionType {
   fold = "FOLD",
   check = "CHECK",
   call = "CALL",

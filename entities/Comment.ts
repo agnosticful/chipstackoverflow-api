@@ -9,14 +9,14 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import Answer from "./Answer";
+import Answer, { AnswerId } from "./Answer";
 import CommentReaction from "./CommentReaction";
-import User from "./User";
+import User, { UserId } from "./User";
 
 @Entity()
 export default class Comment extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: number;
+  id!: CommentId;
 
   @Column({ type: "text" })
   body!: string;
@@ -29,15 +29,15 @@ export default class Comment extends BaseEntity {
 
   @OneToMany(() => CommentReaction, (reaction) => reaction.comment)
   @JoinColumn()
-  reactions!: CommentReaction[];
+  reactions?: CommentReaction[];
 
   @ManyToOne(() => Answer)
   @JoinColumn()
-  answer!: Answer;
+  answer?: Answer | AnswerId;
 
   @ManyToOne(() => User)
   @JoinColumn()
-  author!: User;
+  author?: User | UserId;
 
   @CreateDateColumn()
   createdAt!: Date;
@@ -45,3 +45,11 @@ export default class Comment extends BaseEntity {
   @UpdateDateColumn()
   updatedAt!: Date;
 }
+
+export type CommentId = string & {
+  _CommentIdBrand: never;
+};
+
+export type CommentBody = string & {
+  _CommentBodyBrand: never;
+};

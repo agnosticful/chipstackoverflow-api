@@ -4,24 +4,23 @@ import { Context } from "../context";
 
 export default {
   liked: async (source: Answer, _: any, { dataLoaders }: Context) => {
-    const reaction = await dataLoaders.getAnswerReactionsByAnswerIds.load(
-      source.id as any
+    const reaction = await dataLoaders.getAnswerReactionsByAnswerId.load(
+      source.id
     );
 
     return reaction?.type === ReactionType.like ?? false;
   },
   disliked: async (source: Answer, _: any, { dataLoaders }: Context) => {
-    const reaction = await dataLoaders.getAnswerReactionsByAnswerIds.load(
-      source.id as any
+    const reaction = await dataLoaders.getAnswerReactionsByAnswerId.load(
+      source.id
     );
 
     return reaction?.type === ReactionType.dislike ?? false;
   },
   comments: (source: Answer, _: any, { dataLoaders }: Context) =>
-    dataLoaders.getCommentsByIds.loadMany(source.comments as any),
+    dataLoaders.getCommentsByAnswerId.load(source.id),
   author: async (source: Answer, _: any, { dataLoaders }: Context) =>
-    dataLoaders.getUsersByIds.load(source.author as any),
-  post: async (source: Answer, _: any, { dataLoaders }: Context) => {
-    return dataLoaders.getPostsByIds.load(source.post as any);
-  },
+    dataLoaders.getAuthorByAnswerId.load(source.id),
+  post: async (source: Answer, _: any, { dataLoaders }: Context) =>
+    dataLoaders.getParentPostByAnswerId.load(source.id),
 };

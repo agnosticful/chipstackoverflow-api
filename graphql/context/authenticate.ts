@@ -11,10 +11,7 @@ const firebaseAdmin = admin.initializeApp({
   projectId: process.env.FIREBASE_PROJECT_ID,
 });
 
-export default async <Context extends any = any>(
-  request: FastifyRequest,
-  context: Context
-): Promise<Context> => {
+export default async (request: FastifyRequest, context: any): Promise<any> => {
   if (
     request.headers.authorization &&
     request.headers.authorization.startsWith("Bearer ")

@@ -3,7 +3,7 @@ import { Context } from "../context";
 
 export default {
   answers: async (source: Post, _: any, { dataLoaders }: Context) =>
-    dataLoaders.getAnswersByIds.loadMany(source.answers as any),
+    dataLoaders.getAnswersByPostIds.load(source.id),
   author: async (source: Post, _: any, { dataLoaders }: Context) =>
-    dataLoaders.getUsersByIds.load(source.author as any),
+    dataLoaders.getAuthorByPostId.load(source.id),
 };
