@@ -51,7 +51,7 @@ export default class Post extends BaseEntity {
     type: "smallint",
     array: true,
     transformer: {
-      from: (value: number[]) =>
+      from: (value: (number | null)[]) =>
         value.map((v) => (v ? intToPlayingCardPair(v) : null)),
       to: (value: ([PlayingCard, PlayingCard] | null)[]) =>
         value.map((v) => (v ? playingCardPairToInt(...v) : null)),
@@ -63,10 +63,8 @@ export default class Post extends BaseEntity {
     type: "smallint",
     array: true,
     transformer: {
-      from: (value: (number | null)[]) =>
-        value.map((v) => (v ? intToPlayingCard(v) : null)),
-      to: (value: (PlayingCard | null)[]) =>
-        value.map((v) => (v ? playingCardToInt(v) : null)),
+      from: (value: number[]) => value.map((v) => intToPlayingCard(v)),
+      to: (value: PlayingCard[]) => value.map((v) => playingCardToInt(v)),
     },
   })
   communityCards!: PlayingCard[];
