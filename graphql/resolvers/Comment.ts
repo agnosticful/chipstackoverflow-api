@@ -4,21 +4,21 @@ import ReactionType from "../../entities/ReactionType";
 
 export default {
   liked: async (source: Comment, _: any, { dataLoaders }: Context) => {
-    const reaction = await dataLoaders.getCommentReactionsByCommentIds.load(
-      source.id as any
+    const reaction = await dataLoaders.getCommentReactionsByCommentId.load(
+      source.id
     );
 
     return reaction?.type === ReactionType.like ?? false;
   },
   disliked: async (source: Comment, _: any, { dataLoaders }: Context) => {
-    const reaction = await dataLoaders.getCommentReactionsByCommentIds.load(
-      source.id as any
+    const reaction = await dataLoaders.getCommentReactionsByCommentId.load(
+      source.id
     );
 
     return reaction?.type === ReactionType.dislike ?? false;
   },
   author: async (source: Comment, _: any, { dataLoaders }: Context) =>
-    dataLoaders.getUsersByIds.load(source.author as any),
+    dataLoaders.getAuthorByCommentId.load(source.id),
   answer: async (source: Comment, _: any, { dataLoaders }: Context) =>
-    dataLoaders.getAnswersByIds.load(source.answer as any),
+    dataLoaders.getParentAnswerByCommentId.load(source.answer as any),
 };

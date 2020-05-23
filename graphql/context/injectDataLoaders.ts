@@ -1,33 +1,30 @@
 import DataLoader from "dataloader";
 import { FastifyRequest } from "fastify";
-import Answer from "../../entities/Answer";
+import Answer, { AnswerId } from "../../entities/Answer";
 import AnswerReaction from "../../entities/AnswerReaction";
-import Comment from "../../entities/Comment";
+import Comment, { CommentId } from "../../entities/Comment";
 import CommentReaction from "../../entities/CommentReaction";
-import Post from "../../entities/Post";
+import Post, { PostId } from "../../entities/Post";
 import User from "../../entities/User";
 
 export interface DataLoaders {
-  getUsersByIds: DataLoader<string, User>;
-  getAnswersByIds: DataLoader<string, Answer>;
-  getAnswerReactionsByAnswerIds: DataLoader<string, AnswerReaction>;
-  getCommentsByIds: DataLoader<string, Comment>;
-  getCommentReactionsByCommentIds: DataLoader<string, CommentReaction>;
-  getPostsByIds: DataLoader<string, Post>;
+  getAnswersByPostIds: DataLoader<PostId, Answer[]>;
+  getAnswerReactionsByAnswerId: DataLoader<AnswerId, AnswerReaction>;
+  getAuthorByAnswerId: DataLoader<AnswerId, User>;
+  getAuthorByCommentId: DataLoader<CommentId, User>;
+  getAuthorByPostId: DataLoader<PostId, User>;
+  getCommentsByAnswerId: DataLoader<AnswerId, Comment[]>;
+  getCommentReactionsByCommentId: DataLoader<CommentId, CommentReaction>;
+  getParentAnswerByCommentId: DataLoader<CommentId, Answer>;
+  getParentPostByAnswerId: DataLoader<AnswerId, Post>;
 }
 
-export default async <Context extends any = any>(
-  _: FastifyRequest,
-  context: Context
-): Promise<Context> => {
+export default async (_: FastifyRequest, context: any): Promise<any> => {
   const dataLoaders: DataLoaders = {
-    getUsersByIds: new DataLoader((userIds) => User.findByIds(userIds as any)),
-    getAnswersByIds: new DataLoader((answerIds) =>
-      Answer.findByIds(answerIds as any, {
-        loadRelationIds: { relations: ["author", "post", "comments"] },
-      })
+    getAnswersByPostIds: new DataLoader((postIds) =>
+      Promise.all(postIds.map((post) => Answer.find({ where: { post } })))
     ),
-    getAnswerReactionsByAnswerIds: context.userId
+    getAnswerReactionsByAnswerId: context.userId
       ? new DataLoader(async (answerIds) => {
           const reactions = await AnswerReaction.find({
             where: answerIds.map((answerId) => ({
@@ -45,12 +42,33 @@ export default async <Context extends any = any>(
           );
         })
       : noopDataLoader,
-    getCommentsByIds: new DataLoader((commentIds) =>
-      Comment.findByIds(commentIds as any, {
-        loadRelationIds: { relations: ["author", "answer"] },
-      })
+    getAuthorByAnswerId: new DataLoader(async (answerIds) => {
+      const answers = await Answer.findByIds(answerIds as any, {
+        relations: ["author"],
+      });
+
+      return answers.map((answer) => answer.author as User);
+    }),
+    getAuthorByCommentId: new DataLoader(async (commentIds) => {
+      const comments = await Comment.findByIds(commentIds as any, {
+        relations: ["author"],
+      });
+
+      return comments.map((comment) => comment.author as User);
+    }),
+    getAuthorByPostId: new DataLoader(async (postIds) => {
+      const posts = await Post.findByIds(postIds as any, {
+        relations: ["author"],
+      });
+
+      return posts.map((post) => post.author as User);
+    }),
+    getCommentsByAnswerId: new DataLoader((answerIds) =>
+      Promise.all(
+        answerIds.map((answer) => Comment.find({ where: { answer } }))
+      )
     ),
-    getCommentReactionsByCommentIds: context.userId
+    getCommentReactionsByCommentId: context.userId
       ? new DataLoader(async (commentIds) => {
           const reactions = await CommentReaction.find({
             where: commentIds.map((commentId) => ({
@@ -68,18 +86,19 @@ export default async <Context extends any = any>(
           );
         })
       : noopDataLoader,
-    getPostsByIds: new DataLoader((postIds) => {
-      console.log(postIds);
-
-      Post.findByIds(postIds as any, {
-        loadRelationIds: { relations: ["author", "answers"] },
-      }).then((res) => {
-        console.log(res);
+    getParentAnswerByCommentId: new DataLoader(async (commentIds) => {
+      const comments = await Comment.findByIds(commentIds as any, {
+        relations: ["answer"],
       });
 
-      return Post.findByIds(postIds as any, {
-        loadRelationIds: { relations: ["author", "answers"] },
+      return comments.map((comment) => comment.answer as Answer);
+    }),
+    getParentPostByAnswerId: new DataLoader(async (answerIds) => {
+      const answers = await Answer.findByIds(answerIds as any, {
+        relations: ["post"],
       });
+
+      return answers.map((answer) => answer.post as Post);
     }),
   };
 

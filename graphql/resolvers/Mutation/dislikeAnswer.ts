@@ -2,6 +2,7 @@ import { AuthenticationError, UserInputError } from "apollo-server-fastify";
 import { getConnection } from "typeorm";
 import Answer from "../../../entities/Answer";
 import AnswerReaction from "../../../entities/AnswerReaction";
+import Post from "../../../entities/Post";
 import ReactionType from "../../../entities/ReactionType";
 
 export default async (_: any, args: any, context: any) => {
@@ -18,6 +19,8 @@ export default async (_: any, args: any, context: any) => {
       throw new UserInputError(`The answer (id: ${args.id}) does not exist.`);
     }
 
+    const post = answer.post as Post;
+
     const previousReaction = await manager.findOne(AnswerReaction, {
       where: { author: context.userId, answer: args.id },
     });
@@ -29,7 +32,7 @@ export default async (_: any, args: any, context: any) => {
         );
       }
 
-      answer.post.likes -= 1;
+      post.likes -= 1;
       answer.likes -= 1;
 
       await manager.remove(previousReaction);
@@ -40,7 +43,7 @@ export default async (_: any, args: any, context: any) => {
     reaction.author = context.userId;
     reaction.answer = args.id;
 
-    answer.post.dislikes += 1;
+    post.dislikes += 1;
     answer.dislikes += 1;
 
     await manager.save(answer.post);

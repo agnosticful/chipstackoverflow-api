@@ -11,16 +11,16 @@ import {
 } from "typeorm";
 import AnswerReaction from "./AnswerReaction";
 import Comment from "./Comment";
-import Post from "./Post";
-import User from "./User";
+import Post, { PostId } from "./Post";
+import User, { UserId } from "./User";
 
 @Entity()
 export default class Answer extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: number;
+  readonly id!: AnswerId;
 
   @Column({ type: "text" })
-  body!: string;
+  body!: AnswerBody;
 
   @Column({ type: "integer", default: 0 })
   likes!: number;
@@ -30,23 +30,48 @@ export default class Answer extends BaseEntity {
 
   @OneToMany(() => AnswerReaction, (reaction) => reaction.answer)
   @JoinColumn()
-  reactions!: AnswerReaction[];
+  reactions?: AnswerReaction[];
 
   @OneToMany(() => Comment, (comment) => comment.answer)
   @JoinColumn()
-  comments!: Comment[];
+  comments?: Comment[];
 
   @ManyToOne(() => User)
   @JoinColumn()
-  author!: User;
+  author?: User | UserId;
 
   @ManyToOne(() => Post)
   @JoinColumn()
-  post!: Post;
+  post?: Post | PostId;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  readonly createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  readonly updatedAt!: Date;
+}
+
+export type AnswerId = string & {
+  _AnswerIdBrand: never;
+};
+
+export type AnswerBody = string & {
+  _AnswerBodyBrand: never;
+};
+
+export function assertAnswerBody(
+  value: string,
+  name: string = "value"
+): asserts value is AnswerBody {
+  if (value.length < 8) {
+    throw new Error(
+      `${name} is too short. ${name} needs to be a 8-65535-length string.`
+    );
+  }
+
+  if (value.length > 65535) {
+    throw new Error(
+      `${name} is too long. ${name} needs to be a 8-65535-length string.`
+    );
+  }
 }

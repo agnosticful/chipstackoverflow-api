@@ -10,7 +10,7 @@ import {
 @Entity()
 export default class User extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: string;
+  id!: UserId;
 
   @Column({ type: "text" })
   email!: string | null;
@@ -30,3 +30,7 @@ export default class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt!: Date;
 }
+
+export type UserId = string & {
+  _UserIdBrand: never;
+};

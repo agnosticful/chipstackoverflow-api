@@ -3,6 +3,8 @@ import { getConnection } from "typeorm";
 import Comment from "../../../entities/Comment";
 import CommentReaction from "../../../entities/CommentReaction";
 import ReactionType from "../../../entities/ReactionType";
+import Answer from "../../../entities/Answer";
+import Post from "../../../entities/Post";
 
 export default async (_: any, args: any, context: any) => {
   if (!context.userId) {
@@ -18,6 +20,9 @@ export default async (_: any, args: any, context: any) => {
       throw new UserInputError(`The comment (id: ${args.id}) does not exist.`);
     }
 
+    const answer = comment.answer as Answer;
+    const post = answer.post as Post;
+
     const previousReaction = await manager.findOne(CommentReaction, {
       where: { author: context.userId, comment: args.id },
     });
@@ -29,8 +34,8 @@ export default async (_: any, args: any, context: any) => {
         );
       }
 
-      comment.answer.post.dislikes -= 1;
-      comment.answer.dislikes -= 1;
+      post.dislikes -= 1;
+      answer.dislikes -= 1;
       comment.dislikes -= 1;
 
       await manager.remove(previousReaction);
@@ -41,12 +46,12 @@ export default async (_: any, args: any, context: any) => {
     reaction.author = context.userId;
     reaction.comment = args.id;
 
-    comment.answer.post.likes += 1;
-    comment.answer.likes += 1;
+    post.likes += 1;
+    answer.likes += 1;
     comment.likes += 1;
 
-    await manager.save(comment.answer.post);
-    await manager.save(comment.answer);
+    await manager.save(post);
+    await manager.save(answer);
     await manager.save(comment);
     await manager.save(reaction);
 

@@ -30,13 +30,13 @@ enum GameType {
 @Entity()
 export default class Post extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: number;
+  id!: PostId;
 
   @Column({ type: "text" })
-  title!: string;
+  title!: PostTitle;
 
   @Column({ type: "text" })
-  body!: string;
+  body!: PostBody;
 
   @Column({ type: "enum", enum: GameType })
   gameType!: GameType;
@@ -130,11 +130,11 @@ export default class Post extends BaseEntity {
 
   @ManyToOne(() => User)
   @JoinColumn()
-  author!: User;
+  author?: User;
 
   @OneToMany(() => Answer, (answer) => answer.post)
   @JoinColumn()
-  answers!: Answer[];
+  answers?: Answer[];
 
   @CreateDateColumn()
   createdAt!: Date;
@@ -142,3 +142,15 @@ export default class Post extends BaseEntity {
   @UpdateDateColumn()
   updatedAt!: Date;
 }
+
+export type PostId = string & {
+  _PostIdBrand: never;
+};
+
+export type PostTitle = string & {
+  _PostTitleBrand: never;
+};
+
+export type PostBody = string & {
+  _PostBodyBrand: never;
+};

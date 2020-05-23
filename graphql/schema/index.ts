@@ -13,24 +13,24 @@ export default gql`
     myself: User!
 
     """
-
+    Returns the post by the given id.
     """
     post(id: ID!): Post
 
     """
-
+    Returns posts in popularity order.
     """
     popularPosts: [Post]!
 
     """
-
+    Returns posts in chronological order.
     """
     recentPosts: [Post]!
   }
 
   type Mutation {
     """
-
+    Creates a post by the given params and returns it.
     """
     createPost(
       """
@@ -104,9 +104,12 @@ export default gql`
       riverActions: [GameStreetActionInput]!
     ): Post!
 
+    """
+    Creates an answer to a post with the given params.
+    """
     createAnswer(
       """
-
+      ID that points the target Post.
       """
       postId: ID!
 
@@ -116,9 +119,12 @@ export default gql`
       body: String!
     ): Answer!
 
+    """
+    Creates an comment to an answer with the given params.
+    """
     createComment(
       """
-
+      ID that points the target answer.
       """
       answerId: ID!
 
@@ -128,12 +134,24 @@ export default gql`
       body: String!
     ): Comment!
 
+    """
+    Likes an answer. If the request user already disliked the answer, it will be un-disliked.
+    """
     likeAnswer(id: ID!): Boolean
 
+    """
+    Likes a comment. If the request user already disliked the answer, it will be un-disliked.
+    """
     likeComment(id: ID!): Boolean
 
+    """
+    Dislikes an answer. If the request user already disliked the answer, it will be un-disliked.
+    """
     dislikeAnswer(id: ID!): Boolean
 
+    """
+    Dislikes a comment. If the request user already disliked the answer, it will be un-disliked.
+    """
     dislikeComment(id: ID!): Boolean
   }
 
@@ -149,35 +167,6 @@ export default gql`
     name: String!
     profileImageURL: String!
   }
-
-  # type Session {
-  #   id: ID!
-  #   token: String!
-  # }
-
-  # type Room {
-  #   id: ID!
-  #   name: String!
-  #   members: [User]
-  #   pomodoroSessions: [PomodoroSession]
-  # }
-
-  # type PomodoroSession {
-  #   id: ID!
-  #   type: PomodoroSessionType!
-  #   startedAt: Timestamp!
-  #   endedAt: Timestamp!
-  # }
-
-  # enum PomodoroSessionType {
-  #   FOCUS
-  #   BREAK
-  # }
-
-  # input PomodoroSessionInput {
-  #   type: PomodoroSessionType!
-  #   durationInSeconds: Int!
-  # }
 
   type Post {
     """
@@ -287,7 +276,14 @@ export default gql`
   }
 
   enum GameType {
+    """
+
+    """
     CASH
+
+    """
+
+    """
     TOURNAMENT
   }
 
@@ -335,13 +331,45 @@ export default gql`
 
   type Answer {
     id: ID!
+
+    """
+    Answer body.
+    """
     body: String!
+
+    """
+    Number of likes to the answer.
+    """
     likes: Int!
+
+    """
+    Number of dislikes to the answer.
+    """
     dislikes: Int!
+
+    """
+    Whether the request user liked the answer or not.
+    """
     liked: Boolean!
+
+    """
+    Whether the request user disliked the answer or not.
+    """
     disliked: Boolean!
+
+    """
+    The user who created the answer.
+    """
     author: UserProfile!
+
+    """
+    The post which the answer created for.
+    """
     post: Post!
+
+    """
+    The comments which are in the answer.
+    """
     comments: [Comment]!
   }
 
