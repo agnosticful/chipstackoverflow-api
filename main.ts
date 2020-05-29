@@ -1,7 +1,10 @@
 import "dotenv/config";
 import Bugsnag from "@bugsnag/js";
 
-Bugsnag.start({ apiKey: process.env.BUGSNAG_API_KEY! });
+Bugsnag.start({
+  apiKey: process.env.BUGSNAG_API_KEY!,
+  releaseStage: process.env.BUGSNAG_RELEASE_STAGE!,
+});
 
 import Fastify from "fastify";
 import * as path from "path";
