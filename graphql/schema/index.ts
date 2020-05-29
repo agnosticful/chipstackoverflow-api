@@ -145,14 +145,24 @@ export default gql`
     likeComment(id: ID!): Boolean
 
     """
-    Dislikes an answer. If the request user already disliked the answer, it will be un-disliked.
+    Dislikes an answer. If the request user already disliked the answer, it will be un-liked.
     """
     dislikeAnswer(id: ID!): Boolean
 
     """
-    Dislikes a comment. If the request user already disliked the answer, it will be un-disliked.
+    Dislikes a comment. If the request user already disliked the answer, it will be un-liked.
     """
     dislikeComment(id: ID!): Boolean
+
+    """
+    Takes back like or dislike on an answer.
+    """
+    unlikeAnswer(id: ID!): Boolean
+
+    """
+    Takes back like or dislike on a comment.
+    """
+    unlikeComment(id: ID!): Boolean
   }
 
   type User {

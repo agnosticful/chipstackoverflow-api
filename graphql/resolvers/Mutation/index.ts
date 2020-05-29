@@ -5,6 +5,8 @@ import dislikeAnswer from "./dislikeAnswer";
 import dislikeComment from "./dislikeComment";
 import likeAnswer from "./likeAnswer";
 import likeComment from "./likeComment";
+import unlikeAnswer from "./unlikeAnswer";
+import unlikeComment from "./unlikeComment";
 
 export default {
   createAnswer,
@@ -14,4 +16,6 @@ export default {
   dislikeComment,
   likeAnswer,
   likeComment,
+  unlikeAnswer,
+  unlikeComment,
 };
