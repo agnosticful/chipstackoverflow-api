@@ -1,3 +1,4 @@
+import Bugsnag from "@bugsnag/js";
 import { FastifyRequest } from "fastify";
 import * as admin from "firebase-admin";
 import User from "../../entities/User";
@@ -22,6 +23,8 @@ export default async (request: FastifyRequest, context: any): Promise<any> => {
     try {
       decodedToken = await firebaseAdmin.auth().verifyIdToken(token);
     } catch (err) {
+      Bugsnag.notify(err);
+
       return context;
     }
 

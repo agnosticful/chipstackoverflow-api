@@ -1,4 +1,8 @@
 import "dotenv/config";
+import Bugsnag from "@bugsnag/js";
+
+Bugsnag.start({ apiKey: process.env.BUGSNAG_API_KEY! });
+
 import Fastify from "fastify";
 import * as path from "path";
 import { createConnection, getConnectionOptions } from "typeorm";
