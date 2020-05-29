@@ -20,5 +20,5 @@ export default {
   author: async (source: Comment, _: any, { dataLoaders }: Context) =>
     dataLoaders.getAuthorByCommentId.load(source.id),
   answer: async (source: Comment, _: any, { dataLoaders }: Context) =>
-    dataLoaders.getParentAnswerByCommentId.load(source.answer as any),
+    dataLoaders.getParentAnswerByCommentId.load(source.id),
 };
