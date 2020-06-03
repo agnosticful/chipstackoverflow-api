@@ -1,6 +1,7 @@
 import { FastifyRequest } from "fastify";
 import authenticate from "./authenticate";
 import injectDataLoaders, { DataLoaders } from "./injectDataLoaders";
+import { UserId } from "../../entities/User";
 
 export default async (request: FastifyRequest) => {
   let context = {};
@@ -12,6 +13,6 @@ export default async (request: FastifyRequest) => {
 };
 
 export interface Context {
-  userId?: string;
+  userId?: UserId;
   dataLoaders: DataLoaders;
 }
