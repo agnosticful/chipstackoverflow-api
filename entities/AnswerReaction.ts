@@ -6,6 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
+  UpdateDateColumn,
 } from "typeorm";
 import Answer, { AnswerId } from "./Answer";
 import User, { UserId } from "./User";
@@ -15,7 +16,7 @@ import ReactionType from "./ReactionType";
 @Unique(["answer", "author"])
 export default class AnswerReaction extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: number;
+  readonly id!: number;
 
   @ManyToOne(() => Answer)
   answer?: Answer | AnswerId;
@@ -27,5 +28,8 @@ export default class AnswerReaction extends BaseEntity {
   type!: ReactionType;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  readonly createdAt!: Date;
+
+  @UpdateDateColumn()
+  readonly lastUpdatedAt!: Date;
 }

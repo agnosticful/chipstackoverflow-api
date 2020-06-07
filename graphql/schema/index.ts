@@ -282,7 +282,7 @@ export default gql`
     """
 
     """
-    updatedAt: Timestamp!
+    lastUpdatedAt: Timestamp!
   }
 
   enum GameType {
@@ -381,17 +381,68 @@ export default gql`
     The comments which are in the answer.
     """
     comments: [Comment]!
+
+    """
+
+    """
+    createdAt: Timestamp!
+
+    """
+
+    """
+    lastUpdatedAt: Timestamp!
   }
 
   type Comment {
+    """
+
+    """
     id: ID!
+
+    """
+
+    """
     body: String!
+
+    """
+
+    """
     likes: Int!
+
+    """
+
+    """
     dislikes: Int!
+
+    """
+
+    """
     liked: Boolean!
+
+    """
+
+    """
     disliked: Boolean!
+
+    """
+
+    """
     author: UserProfile!
+
+    """
+
+    """
     answer: Answer!
+
+    """
+
+    """
+    createdAt: Timestamp!
+
+    """
+
+    """
+    lastUpdatedAt: Timestamp!
   }
 
   input PlayingCardInput {
