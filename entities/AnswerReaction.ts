@@ -7,8 +7,8 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from "typeorm";
-import Answer from "./Answer";
-import User from "./User";
+import Answer, { AnswerId } from "./Answer";
+import User, { UserId } from "./User";
 import ReactionType from "./ReactionType";
 
 @Entity()
@@ -18,10 +18,10 @@ export default class AnswerReaction extends BaseEntity {
   id!: number;
 
   @ManyToOne(() => Answer)
-  answer!: Answer;
+  answer?: Answer | AnswerId;
 
   @ManyToOne(() => User)
-  author!: User;
+  author?: User | UserId;
 
   @Column({ type: "enum", enum: ReactionType })
   type!: ReactionType;

@@ -7,8 +7,8 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from "typeorm";
-import Comment from "./Comment";
-import User from "./User";
+import Comment, { CommentId } from "./Comment";
+import User, { UserId } from "./User";
 import ReactionType from "./ReactionType";
 
 @Entity()
@@ -18,10 +18,10 @@ export default class CommentReaction extends BaseEntity {
   id!: number;
 
   @ManyToOne(() => Comment)
-  comment!: Comment;
+  comment?: Comment | CommentId;
 
   @ManyToOne(() => User)
-  author!: User;
+  author?: User | UserId;
 
   @Column({ type: "enum", enum: ReactionType })
   type!: ReactionType;

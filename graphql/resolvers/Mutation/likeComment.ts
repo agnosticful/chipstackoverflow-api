@@ -1,41 +1,71 @@
 import { AuthenticationError, UserInputError } from "apollo-server-fastify";
 import { getConnection } from "typeorm";
-import Comment from "../../../entities/Comment";
+import Comment, { CommentId } from "../../../entities/Comment";
 import CommentReaction from "../../../entities/CommentReaction";
 import ReactionType from "../../../entities/ReactionType";
-import Answer from "../../../entities/Answer";
-import Post from "../../../entities/Post";
+import Answer, { AnswerId } from "../../../entities/Answer";
+import Post, { PostId } from "../../../entities/Post";
+import { Context } from "../../context";
 
-export default async (_: any, args: any, context: any) => {
-  if (!context.userId) {
+export default async (
+  _: any,
+  { id: commentId }: { id: CommentId },
+  { userId }: Context
+) => {
+  if (!userId) {
     throw new AuthenticationError("Authentication is required.");
   }
 
   return getConnection().transaction(async (manager) => {
-    const comment = await manager.findOne(Comment, args.id, {
-      relations: ["answer", "answer.post"],
+    const comment = await manager.findOne(Comment, commentId, {
+      lock: { mode: "pessimistic_write" },
+      loadRelationIds: {
+        relations: ["answer"],
+      },
     });
 
     if (!comment) {
-      throw new UserInputError(`The comment (id: ${args.id}) does not exist.`);
+      throw new UserInputError(
+        `The comment (id: ${commentId}) does not exist.`
+      );
     }
 
-    const answer = comment.answer as Answer;
-    const post = answer.post as Post;
+    const answer = await manager.findOne(Answer, comment.answer as AnswerId, {
+      lock: { mode: "pessimistic_write" },
+      loadRelationIds: {
+        relations: ["post"],
+      },
+    });
+
+    if (!answer) {
+      throw new UserInputError(
+        `The comment (id: ${commentId}) is in invalid state. The comment itself exists but the bound answer (${comment.answer}) does not exist.`
+      );
+    }
+
+    const post = await manager.findOne(Post, answer.post as PostId, {
+      lock: { mode: "pessimistic_write" },
+    });
+
+    if (!post) {
+      throw new UserInputError(
+        `The comment (id: ${commentId}) or answer (id: ${comment.answer}) is in invalid state. Those two resource themselves exist but the bound post (${answer.post}) does not exist.`
+      );
+    }
 
     const previousReaction = await manager.findOne(CommentReaction, {
-      where: { author: context.userId, comment: args.id },
+      where: { author: userId, comment: commentId },
+      lock: { mode: "pessimistic_write" },
     });
 
     if (previousReaction) {
       if (previousReaction.type === ReactionType.like) {
         throw new UserInputError(
-          `The comment (id: ${args.id}) has already been liked.`
+          `The comment (id: ${commentId}) has already been liked.`
         );
       }
 
       post.dislikes -= 1;
-      answer.dislikes -= 1;
       comment.dislikes -= 1;
 
       await manager.remove(previousReaction);
@@ -43,15 +73,13 @@ export default async (_: any, args: any, context: any) => {
 
     const reaction = new CommentReaction();
     reaction.type = ReactionType.like;
-    reaction.author = context.userId;
-    reaction.comment = args.id;
+    reaction.author = userId;
+    reaction.comment = commentId;
 
     post.likes += 1;
-    answer.likes += 1;
     comment.likes += 1;
 
     await manager.save(post);
-    await manager.save(answer);
     await manager.save(comment);
     await manager.save(reaction);
 
