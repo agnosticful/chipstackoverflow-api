@@ -6,6 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
+  UpdateDateColumn,
 } from "typeorm";
 import Comment from "./Comment";
 import User from "./User";
@@ -15,7 +16,7 @@ import ReactionType from "./ReactionType";
 @Unique(["comment", "author"])
 export default class CommentReaction extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: number;
+  readonly id!: number;
 
   @ManyToOne(() => Comment)
   comment!: Comment;
@@ -27,5 +28,8 @@ export default class CommentReaction extends BaseEntity {
   type!: ReactionType;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  readonly createdAt!: Date;
+
+  @UpdateDateColumn()
+  readonly lastUpdatedAt!: Date;
 }

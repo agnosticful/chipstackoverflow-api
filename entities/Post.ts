@@ -30,7 +30,7 @@ enum GameType {
 @Entity()
 export default class Post extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: PostId;
+  readonly id!: PostId;
 
   @Column({ type: "text" })
   title!: PostTitle;
@@ -137,10 +137,10 @@ export default class Post extends BaseEntity {
   answers?: Answer[];
 
   @CreateDateColumn()
-  createdAt!: Date;
+  readonly createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  readonly lastUpdatedAt!: Date;
 }
 
 export type PostId = string & {

@@ -10,7 +10,7 @@ import {
 @Entity()
 export default class User extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: UserId;
+  readonly id!: UserId;
 
   @Column({ type: "text" })
   email!: string | null;
@@ -25,10 +25,10 @@ export default class User extends BaseEntity {
   authenticationId!: string;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  readonly createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  readonly lastUpdatedAt!: Date;
 }
 
 export type UserId = string & {

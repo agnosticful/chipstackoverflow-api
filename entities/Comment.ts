@@ -16,7 +16,7 @@ import User, { UserId } from "./User";
 @Entity()
 export default class Comment extends BaseEntity {
   @PrimaryGeneratedColumn("uuid")
-  id!: CommentId;
+  readonly id!: CommentId;
 
   @Column({ type: "text" })
   body!: string;
@@ -40,10 +40,10 @@ export default class Comment extends BaseEntity {
   author?: User | UserId;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  readonly createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  readonly lastUpdatedAt!: Date;
 }
 
 export type CommentId = string & {

@@ -48,7 +48,7 @@ export default class Answer extends BaseEntity {
   readonly createdAt!: Date;
 
   @UpdateDateColumn()
-  readonly updatedAt!: Date;
+  readonly lastUpdatedAt!: Date;
 }
 
 export type AnswerId = string & {
