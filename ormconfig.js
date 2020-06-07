@@ -10,4 +10,7 @@ module.exports = {
   migrations: ["migrations/**/*.ts"],
   subscribers: ["subscribers/**/*.ts"],
   namingStrategy: new SnakeNamingStrategy(),
+  cli: {
+    migrationsDir: "migrations",
+  },
 };
