@@ -22,7 +22,11 @@ export interface DataLoaders {
 export default async (_: FastifyRequest, context: any): Promise<any> => {
   const dataLoaders: DataLoaders = {
     getAnswersByPostIds: new DataLoader((postIds) =>
-      Promise.all(postIds.map((post) => Answer.find({ where: { post } })))
+      Promise.all(
+        postIds.map((post) =>
+          Answer.find({ where: { post }, order: { createdAt: "DESC" } })
+        )
+      )
     ),
     getAnswerReactionsByAnswerId: context.userId
       ? new DataLoader(async (answerIds) => {
@@ -65,7 +69,9 @@ export default async (_: FastifyRequest, context: any): Promise<any> => {
     }),
     getCommentsByAnswerId: new DataLoader((answerIds) =>
       Promise.all(
-        answerIds.map((answer) => Comment.find({ where: { answer } }))
+        answerIds.map((answer) =>
+          Comment.find({ where: { answer }, order: { createdAt: "DESC" } })
+        )
       )
     ),
     getCommentReactionsByCommentId: context.userId
