@@ -1,34 +1,62 @@
-import { AuthenticationError, UserInputError } from "apollo-server-fastify";
+import {
+  AuthenticationError,
+  ForbiddenError,
+  UserInputError,
+} from "apollo-server-fastify";
 import { getConnection } from "typeorm";
 import Answer, { AnswerId } from "../../../entities/Answer";
 import Comment, { CommentBody } from "../../../entities/Comment";
 import { Context } from "../../context";
+import User from "../../../entities/User";
 
-export default async (_: any, { answerId, body }: any, { userId }: Context) => {
+export default async (
+  _: any,
+  { answerId, body }: { answerId: AnswerId; body: string },
+  { userId }: Context
+): Promise<Comment> => {
   if (!userId) {
     throw new AuthenticationError("Authentication is required.");
   }
 
-  await validateAnswerId(answerId);
   validateBody(body);
 
-  return await getConnection()
-    .getRepository(Comment)
-    .create({
-      body,
-      answer: answerId,
-      author: userId,
-    })
-    .save();
-};
+  return await getConnection().transaction(async (manager) => {
+    const [user, answer] = await Promise.all([
+      manager.getRepository(User).findOne(userId, {
+        lock: { mode: "pessimistic_read" },
+      }),
+      manager
+        .getRepository(Answer)
+        .findOne(answerId, { lock: { mode: "pessimistic_read" } }),
+    ]);
 
-async function validateAnswerId(answerId: AnswerId) {
-  if (!(await Answer.findOne(answerId))) {
-    throw new UserInputError(
-      `answerId is invalid. The answer (id: ${answerId}) is not found.`
-    );
-  }
-}
+    if (!user) {
+      throw new ForbiddenError(
+        "Your user data needs to exist to create an answer."
+      );
+    }
+
+    if (!answer) {
+      throw new UserInputError(
+        `The given answerd is invalid. The answer (id: ${answerId}) is not found.`
+      );
+    }
+
+    const result = await manager
+      .getRepository(Comment)
+      .insert({ body, answer: answer.id, author: user.id });
+
+    const comment = await manager
+      .getRepository(Comment)
+      .findOne(result.identifiers[0].id);
+
+    if (!comment) {
+      throw new Error("No new comment was successfully created.");
+    }
+
+    return comment;
+  });
+};
 
 function validateBody(body: string): asserts body is CommentBody {
   if (body.trim() !== body) {

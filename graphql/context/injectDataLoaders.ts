@@ -94,7 +94,7 @@ export default async (_: FastifyRequest, context: any): Promise<any> => {
             .find({
               where: commentIds.map((commentId) => ({
                 author: context.userId,
-                answer: commentId,
+                comment: commentId,
               })),
               loadRelationIds: { relations: ["author", "comment"] },
             });

@@ -1,9 +1,14 @@
-import { AuthenticationError, UserInputError } from "apollo-server-fastify";
+import {
+  AuthenticationError,
+  ForbiddenError,
+  UserInputError,
+} from "apollo-server-fastify";
 import { getConnection } from "typeorm";
 import Answer, { AnswerId } from "../../../entities/Answer";
 import AnswerReaction from "../../../entities/AnswerReaction";
 import Post, { PostId } from "../../../entities/Post";
 import ReactionType from "../../../entities/ReactionType";
+import User from "../../../entities/User";
 import { Context } from "../../context";
 
 export default async (
@@ -16,12 +21,23 @@ export default async (
   }
 
   return getConnection().transaction(async (manager) => {
-    const answer = await manager.getRepository(Answer).findOne(answerId, {
-      lock: { mode: "pessimistic_write" },
-      loadRelationIds: {
-        relations: ["post"],
-      },
-    });
+    const [user, answer] = await Promise.all([
+      manager.getRepository(User).findOne(userId, {
+        lock: { mode: "pessimistic_read" },
+      }),
+      manager.getRepository(Answer).findOne(answerId, {
+        lock: { mode: "pessimistic_write" },
+        loadRelationIds: {
+          relations: ["post"],
+        },
+      }),
+    ]);
+
+    if (!user) {
+      throw new ForbiddenError(
+        "Your user data needs to exist to create an answer."
+      );
+    }
 
     if (!answer) {
       throw new UserInputError(`The answer (id: ${answerId}) does not exist.`);
