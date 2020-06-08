@@ -4,6 +4,7 @@ import Bugsnag from "@bugsnag/js";
 Bugsnag.start({
   apiKey: process.env.BUGSNAG_API_KEY!,
   releaseStage: process.env.BUGSNAG_RELEASE_STAGE!,
+  enabledReleaseStages: ["production", "development"],
 });
 
 import Fastify from "fastify";
