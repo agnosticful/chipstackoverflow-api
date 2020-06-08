@@ -1,8 +1,13 @@
-import { AuthenticationError, UserInputError } from "apollo-server-fastify";
+import {
+  AuthenticationError,
+  ForbiddenError,
+  UserInputError,
+} from "apollo-server-fastify";
 import { getConnection } from "typeorm";
 import PlayingCard from "../../../entities/PlayingCard";
 import Post, { GameType } from "../../../entities/Post";
 import GameStreetAction from "../../../entities/GameStreetAction";
+import User from "../../../entities/User";
 import { Context } from "../../context";
 
 export default async (
@@ -39,7 +44,7 @@ export default async (
     riverActions: GameStreetAction[];
   },
   { userId }: Context
-) => {
+): Promise<Post> => {
   if (!userId) {
     throw new AuthenticationError("Authentication is required.");
   }
@@ -56,9 +61,18 @@ export default async (
 
   // TODO: add validations for actions
 
-  return await getConnection()
-    .getRepository(Post)
-    .create({
+  return await getConnection().transaction(async (manager) => {
+    const user = await manager.getRepository(User).findOne(userId, {
+      lock: { mode: "pessimistic_read" },
+    });
+
+    if (!user) {
+      throw new ForbiddenError(
+        "Your user data needs to exist to create an answer."
+      );
+    }
+
+    const result = await manager.getRepository(Post).insert({
       title: title,
       body: body,
       gameType: gameType,
@@ -73,9 +87,19 @@ export default async (
       flopActions: flopActions,
       turnActions: turnActions,
       riverActions: riverActions,
-      author: userId,
-    })
-    .save();
+      author: user.id,
+    });
+
+    const post = await manager
+      .getRepository(Post)
+      .findOne(result.identifiers[0].id);
+
+    if (!post) {
+      throw new Error("No new post was successfully created.");
+    }
+
+    return post;
+  });
 };
 
 function validateTitle(title: string): void {

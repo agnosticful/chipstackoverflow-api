@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -28,7 +27,7 @@ export enum GameType {
 }
 
 @Entity()
-export default class Post extends BaseEntity {
+export default class Post {
   @PrimaryGeneratedColumn("uuid")
   readonly id!: PostId;
 

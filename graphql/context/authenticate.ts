@@ -2,6 +2,7 @@ import Bugsnag from "@bugsnag/js";
 import { FastifyRequest } from "fastify";
 import * as admin from "firebase-admin";
 import User from "../../entities/User";
+import { getConnection } from "typeorm";
 
 const firebaseAdmin = admin.initializeApp({
   credential: admin.credential.cert({
@@ -28,19 +29,34 @@ export default async (request: FastifyRequest, context: any): Promise<any> => {
       return context;
     }
 
-    let user = await User.findOne({
-      where: { authenticationId: decodedToken.uid },
+    const user = await getConnection().transaction(async (manager) => {
+      const user = await manager
+        .getRepository(User)
+        .findOne({ where: { authenticationId: decodedToken.uid } });
+
+      if (user) {
+        return user;
+      }
+
+      const result = await manager.getRepository(User).insert({
+        email: decodedToken.email ?? null,
+        name: decodedToken.name ?? "No Name",
+        profileImageURL: decodedToken.picture ?? "naiyo",
+        authenticationId: decodedToken.uid,
+      });
+
+      const createdUser = await manager
+        .getRepository(User)
+        .findOne(result.identifiers[0].id);
+
+      if (!createdUser) {
+        throw new Error(
+          "User generation failed. No new user was successfully created."
+        );
+      }
+
+      return createdUser;
     });
-
-    if (!user) {
-      user = new User();
-      user.email = decodedToken.email ?? null;
-      user.name = decodedToken.name ?? "No Name";
-      user.profileImageURL = decodedToken.picture ?? "naiyo";
-      user.authenticationId = decodedToken.uid;
-
-      await user.save();
-    }
 
     return { ...context, userId: user.id };
   }
