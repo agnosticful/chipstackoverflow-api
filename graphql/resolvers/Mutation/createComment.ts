@@ -12,17 +12,17 @@ import User from "../../../entities/User";
 export default async (
   _: any,
   { answerId, body }: { answerId: AnswerId; body: string },
-  { userId }: Context
+  { user }: Context
 ): Promise<Comment> => {
-  if (!userId) {
+  if (!user) {
     throw new AuthenticationError("Authentication is required.");
   }
 
   validateBody(body);
 
   return await getConnection().transaction(async (manager) => {
-    const [user, answer] = await Promise.all([
-      manager.getRepository(User).findOne(userId, {
+    const [userForCheck, answer] = await Promise.all([
+      manager.getRepository(User).findOne(user.id, {
         lock: { mode: "pessimistic_read" },
       }),
       manager
@@ -30,7 +30,7 @@ export default async (
         .findOne(answerId, { lock: { mode: "pessimistic_read" } }),
     ]);
 
-    if (!user) {
+    if (!userForCheck) {
       throw new ForbiddenError(
         "Your user data needs to exist to create an answer."
       );
