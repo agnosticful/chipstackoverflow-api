@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -15,7 +14,7 @@ import Post, { PostId } from "./Post";
 import User, { UserId } from "./User";
 
 @Entity()
-export default class Answer extends BaseEntity {
+export default class Answer {
   @PrimaryGeneratedColumn("uuid")
   readonly id!: AnswerId;
 

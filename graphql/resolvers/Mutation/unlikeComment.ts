@@ -17,7 +17,7 @@ export default async (
   }
 
   return getConnection().transaction(async (manager) => {
-    const comment = await manager.findOne(Comment, commentId, {
+    const comment = await manager.getRepository(Comment).findOne(commentId, {
       lock: { mode: "pessimistic_write" },
       loadRelationIds: {
         relations: ["answer"],
@@ -30,54 +30,66 @@ export default async (
       );
     }
 
-    const answer = await manager.findOne(Answer, comment.answer as AnswerId, {
-      lock: { mode: "pessimistic_write" },
-      loadRelationIds: {
-        relations: ["post"],
-      },
-    });
+    const answer = await manager
+      .getRepository(Answer)
+      .findOne(comment.answer as AnswerId, {
+        lock: { mode: "pessimistic_write" },
+        loadRelationIds: {
+          relations: ["post"],
+        },
+      });
 
     if (!answer) {
       throw new UserInputError(
-        `The comment (id: ${commentId}) is in invalid state. The comment itself exists but the bound answer (${comment.answer}) does not exist.`
+        `The comment (id: ${comment.id}) is in invalid state. The comment itself exists but the bound answer (${comment.answer}) does not exist.`
       );
     }
 
-    const post = await manager.findOne(Post, answer.post as PostId, {
-      lock: { mode: "pessimistic_write" },
-    });
+    const post = await manager
+      .getRepository(Post)
+      .findOne(answer.post as PostId, {
+        lock: { mode: "pessimistic_write" },
+      });
 
     if (!post) {
       throw new UserInputError(
-        `The comment (id: ${commentId}) or answer (id: ${comment.answer}) is in invalid state. Those two resource themselves exist but the bound post (${answer.post}) does not exist.`
+        `The comment (id: ${comment.id}) or answer (id: ${comment.answer}) is in invalid state. Those two resource themselves exist but the bound post (${answer.post}) does not exist.`
       );
     }
 
-    const previousReaction = await manager.findOne(CommentReaction, {
-      where: { author: userId, comment: commentId },
+    const reaction = await manager.getRepository(CommentReaction).findOne({
+      where: { author: userId, comment: comment.id },
       lock: { mode: "pessimistic_write" },
     });
 
-    if (!previousReaction) {
+    if (!reaction) {
       throw new UserInputError(
-        `You didn't like or dislike the comment (id: ${commentId}).`
+        `You didn't like or dislike the comment (id: ${comment.id}).`
       );
     }
 
-    switch (previousReaction.type) {
+    switch (reaction.type) {
       case ReactionType.like:
-        post.likes -= 1;
-        comment.likes -= 1;
+        await Promise.all([
+          manager.getRepository(Post).decrement({ id: post.id }, "likes", 1),
+          manager
+            .getRepository(Comment)
+            .decrement({ id: comment.id }, "likes", 1),
+          manager.getRepository(CommentReaction).delete(reaction.id),
+        ]);
+
         break;
       case ReactionType.dislike:
-        post.dislikes -= 1;
-        comment.dislikes -= 1;
+        await Promise.all([
+          manager.getRepository(Post).decrement({ id: post.id }, "dislikes", 1),
+          manager
+            .getRepository(Comment)
+            .decrement({ id: comment.id }, "dislikes", 1),
+          manager.getRepository(CommentReaction).delete(reaction.id),
+        ]);
+
         break;
     }
-
-    await manager.remove(previousReaction);
-    await manager.save(post);
-    await manager.save(comment);
 
     return true;
   });

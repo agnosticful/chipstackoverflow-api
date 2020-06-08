@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -14,7 +13,7 @@ import ReactionType from "./ReactionType";
 
 @Entity()
 @Unique(["answer", "author"])
-export default class AnswerReaction extends BaseEntity {
+export default class AnswerReaction {
   @PrimaryGeneratedColumn("uuid")
   readonly id!: number;
 

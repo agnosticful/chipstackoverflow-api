@@ -1,4 +1,5 @@
-import Post from "../../../entities/Post";
+import { getConnection } from "typeorm";
+import Post, { PostId } from "../../../entities/Post";
 
-export default async (_: any, args: any, __: any) =>
-  (await Post.findOne(args.id)) ?? null;
+export default async (_: any, { id }: { id: PostId }, __: any) =>
+  (await getConnection().getRepository(Post).findOne(id)) ?? null;

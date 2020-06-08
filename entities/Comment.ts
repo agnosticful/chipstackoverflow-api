@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -14,7 +13,7 @@ import CommentReaction from "./CommentReaction";
 import User, { UserId } from "./User";
 
 @Entity()
-export default class Comment extends BaseEntity {
+export default class Comment {
   @PrimaryGeneratedColumn("uuid")
   readonly id!: CommentId;
 
