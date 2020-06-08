@@ -16,7 +16,7 @@ export default async (
   }
 
   return getConnection().transaction(async (manager) => {
-    const answer = await manager.findOne(Answer, answerId, {
+    const answer = await manager.getRepository(Answer).findOne(answerId, {
       lock: { mode: "pessimistic_write" },
       loadRelationIds: {
         relations: ["post"],
@@ -27,45 +27,54 @@ export default async (
       throw new UserInputError(`The answer (id: ${answerId}) does not exist.`);
     }
 
-    const post = await manager.findOne(Post, answer.post as PostId, {
-      lock: { mode: "pessimistic_write" },
-    });
+    const post = await manager
+      .getRepository(Post)
+      .findOne(answer.post as PostId, {
+        lock: { mode: "pessimistic_write" },
+      });
 
     if (!post) {
       throw new UserInputError(
-        `The answer (id: ${answerId}) is in invalid state. The answer itself exists but the bound post (${answer.post}) does not exist.`
+        `The answer (id: ${answer.id}) is in invalid state. The answer itself exists but the bound post (${answer.post}) does not exist.`
       );
     }
 
-    const previousReaction = await manager.findOne(AnswerReaction, {
-      where: { author: userId, answer: answerId },
-      lock: { mode: "pessimistic_write" },
-    });
+    const previousReaction = await manager
+      .getRepository(AnswerReaction)
+      .findOne({
+        where: { author: userId, answer: answer.id },
+        lock: { mode: "pessimistic_write" },
+      });
 
     if (previousReaction) {
       if (previousReaction.type === ReactionType.like) {
         throw new UserInputError(
-          `The answer (id: ${answerId}) has already been liked.`
+          `The answer (id: ${answer.id}) has already been liked.`
         );
       }
 
-      post.dislikes -= 1;
-      answer.dislikes -= 1;
-
-      await manager.remove(previousReaction);
+      await Promise.all([
+        await manager
+          .getRepository(Post)
+          .decrement({ id: post.id }, "dislikes", 1),
+        await manager
+          .getRepository(Answer)
+          .decrement({ id: answer.id }, "dislikes", 1),
+        await manager.getRepository(AnswerReaction).delete(previousReaction.id),
+      ]);
     }
 
-    const reaction = new AnswerReaction();
-    reaction.type = ReactionType.like;
-    reaction.author = userId;
-    reaction.answer = answerId;
-
-    post.likes += 1;
-    answer.likes += 1;
-
-    await manager.save(post);
-    await manager.save(answer);
-    await manager.save(reaction);
+    await Promise.all([
+      manager
+        .getRepository(Post)
+        .increment({ id: answer.post as PostId }, "likes", 1),
+      manager.getRepository(Answer).increment({ id: answer.id }, "likes", 1),
+      manager.getRepository(AnswerReaction).insert({
+        type: ReactionType.like,
+        author: userId,
+        answer: answer.id,
+      }),
+    ]);
 
     return true;
   });

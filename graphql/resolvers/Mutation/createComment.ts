@@ -1,22 +1,25 @@
-import { UserInputError } from "apollo-server-fastify";
+import { AuthenticationError, UserInputError } from "apollo-server-fastify";
+import { getConnection } from "typeorm";
 import Answer, { AnswerId } from "../../../entities/Answer";
 import Comment, { CommentBody } from "../../../entities/Comment";
-import requireAuthenticated from "../common/requireAuthenticated";
+import { Context } from "../../context";
 
-export default async (_: any, { answerId, body }: any, context: any) => {
-  requireAuthenticated(context);
+export default async (_: any, { answerId, body }: any, { userId }: Context) => {
+  if (!userId) {
+    throw new AuthenticationError("Authentication is required.");
+  }
 
   await validateAnswerId(answerId);
   validateBody(body);
 
-  const comment = new Comment();
-  comment.body = body;
-  comment.answer = answerId;
-  comment.author = context.userId;
-
-  await comment.save();
-
-  return comment;
+  return await getConnection()
+    .getRepository(Comment)
+    .create({
+      body,
+      answer: answerId,
+      author: userId,
+    })
+    .save();
 };
 
 async function validateAnswerId(answerId: AnswerId) {

@@ -20,9 +20,9 @@ import PlayingCard, {
   intToPlayingCardPair,
   playingCardPairToInt,
 } from "./PlayingCard";
-import User from "./User";
+import User, { UserId } from "./User";
 
-enum GameType {
+export enum GameType {
   cash = "CASH",
   tournament = "TOURNAMENT",
 }
@@ -130,7 +130,7 @@ export default class Post extends BaseEntity {
 
   @ManyToOne(() => User)
   @JoinColumn()
-  author?: User;
+  author?: User | UserId;
 
   @OneToMany(() => Answer, (answer) => answer.post)
   @JoinColumn()

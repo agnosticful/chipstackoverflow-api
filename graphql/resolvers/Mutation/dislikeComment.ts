@@ -17,7 +17,7 @@ export default async (
   }
 
   return getConnection().transaction(async (manager) => {
-    const comment = await manager.findOne(Comment, commentId, {
+    const comment = await manager.getRepository(Comment).findOne(commentId, {
       lock: { mode: "pessimistic_write" },
       loadRelationIds: {
         relations: ["answer"],
@@ -30,58 +30,67 @@ export default async (
       );
     }
 
-    const answer = await manager.findOne(Answer, comment.answer as AnswerId, {
-      lock: { mode: "pessimistic_write" },
-      loadRelationIds: {
-        relations: ["post"],
-      },
-    });
+    const answer = await manager
+      .getRepository(Answer)
+      .findOne(comment.answer as AnswerId, {
+        lock: { mode: "pessimistic_write" },
+        loadRelationIds: {
+          relations: ["post"],
+        },
+      });
 
     if (!answer) {
       throw new UserInputError(
-        `The comment (id: ${commentId}) is in invalid state. The comment itself exists but the bound answer (${comment.answer}) does not exist.`
+        `The comment (id: ${comment.id}) is in invalid state. The comment itself exists but the bound answer (${comment.answer}) does not exist.`
       );
     }
 
-    const post = await manager.findOne(Post, answer.post as PostId, {
-      lock: { mode: "pessimistic_write" },
-    });
+    const post = await manager
+      .getRepository(Post)
+      .findOne(answer.post as PostId, {
+        lock: { mode: "pessimistic_write" },
+      });
 
     if (!post) {
       throw new UserInputError(
-        `The comment (id: ${commentId}) or answer (id: ${comment.answer}) is in invalid state. Those two resource themselves exist but the bound post (${answer.post}) does not exist.`
+        `The comment (id: ${comment.id}) or answer (id: ${comment.answer}) is in invalid state. Those two resource themselves exist but the bound post (${answer.post}) does not exist.`
       );
     }
 
-    const previousReaction = await manager.findOne(CommentReaction, {
-      where: { author: userId, comment: commentId },
-      lock: { mode: "pessimistic_write" },
-    });
+    const previousReaction = await manager
+      .getRepository(CommentReaction)
+      .findOne({
+        where: { author: userId, comment: comment.id },
+        lock: { mode: "pessimistic_write" },
+      });
 
     if (previousReaction) {
       if (previousReaction.type === ReactionType.dislike) {
         throw new UserInputError(
-          `The comment (id: ${commentId}) has already been disliked.`
+          `The comment (id: ${comment.id}) has already been disliked.`
         );
       }
 
-      post.likes -= 1;
-      comment.likes -= 1;
-
-      await manager.remove(previousReaction);
+      await Promise.all([
+        manager.getRepository(Post).decrement({ id: post.id }, "likes", 1),
+        manager
+          .getRepository(Comment)
+          .decrement({ id: comment.id }, "likes", 1),
+        manager.getRepository(CommentReaction).delete(previousReaction.id),
+      ]);
     }
 
-    const reaction = new CommentReaction();
-    reaction.type = ReactionType.dislike;
-    reaction.author = userId;
-    reaction.comment = commentId;
-
-    post.dislikes += 1;
-    comment.dislikes += 1;
-
-    await manager.save(post);
-    await manager.save(comment);
-    await manager.save(reaction);
+    await Promise.all([
+      manager.getRepository(Post).increment({ id: post.id }, "dislikes", 1),
+      manager
+        .getRepository(Comment)
+        .increment({ id: comment.id }, "dislikes", 1),
+      manager.getRepository(CommentReaction).insert({
+        type: ReactionType.dislike,
+        author: userId,
+        comment: comment.id,
+      }),
+    ]);
 
     return true;
   });
