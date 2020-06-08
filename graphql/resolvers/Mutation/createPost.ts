@@ -43,9 +43,9 @@ export default async (
     turnActions: GameStreetAction[];
     riverActions: GameStreetAction[];
   },
-  { userId }: Context
+  { user }: Context
 ): Promise<Post> => {
-  if (!userId) {
+  if (!user) {
     throw new AuthenticationError("Authentication is required.");
   }
 
@@ -62,11 +62,11 @@ export default async (
   // TODO: add validations for actions
 
   return await getConnection().transaction(async (manager) => {
-    const user = await manager.getRepository(User).findOne(userId, {
+    const userForCheck = await manager.getRepository(User).findOne(user.id, {
       lock: { mode: "pessimistic_read" },
     });
 
-    if (!user) {
+    if (!userForCheck) {
       throw new ForbiddenError(
         "Your user data needs to exist to create an answer."
       );

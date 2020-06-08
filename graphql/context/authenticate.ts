@@ -58,7 +58,7 @@ export default async (request: FastifyRequest, context: any): Promise<any> => {
       return createdUser;
     });
 
-    return { ...context, userId: user.id };
+    return { ...context, user };
   }
 
   return context;

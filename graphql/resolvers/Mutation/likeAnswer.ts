@@ -14,15 +14,15 @@ import { Context } from "../../context";
 export default async (
   _: any,
   { id: answerId }: { id: AnswerId },
-  { userId }: Context
+  { user }: Context
 ) => {
-  if (!userId) {
+  if (!user) {
     throw new AuthenticationError("Authentication is required.");
   }
 
   return getConnection().transaction(async (manager) => {
-    const [user, answer] = await Promise.all([
-      manager.getRepository(User).findOne(userId, {
+    const [userForCheck, answer] = await Promise.all([
+      manager.getRepository(User).findOne(user.id, {
         lock: { mode: "pessimistic_read" },
       }),
       manager.getRepository(Answer).findOne(answerId, {
@@ -33,7 +33,7 @@ export default async (
       }),
     ]);
 
-    if (!user) {
+    if (!userForCheck) {
       throw new ForbiddenError(
         "Your user data needs to exist to create an answer."
       );
@@ -58,7 +58,7 @@ export default async (
     const previousReaction = await manager
       .getRepository(AnswerReaction)
       .findOne({
-        where: { author: userId, answer: answer.id },
+        where: { author: user.id, answer: answer.id },
         lock: { mode: "pessimistic_write" },
       });
 
@@ -87,7 +87,7 @@ export default async (
       manager.getRepository(Answer).increment({ id: answer.id }, "likes", 1),
       manager.getRepository(AnswerReaction).insert({
         type: ReactionType.like,
-        author: userId,
+        author: user.id,
         answer: answer.id,
       }),
     ]);
